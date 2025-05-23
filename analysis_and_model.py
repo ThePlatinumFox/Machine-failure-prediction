@@ -22,14 +22,21 @@ def load_data():
 
 def analysis_and_model_page():
     st.title("Анализ данных и модель")
-
-    data = load_data()
-    if data is None:
+    
+    # Загрузка датасета
+    with st.spinner("Загрузка датасета..."):
+        data = load_data()
+    if data is not None:
+        st.success(f"Датасет загружен: {data.shape[0]} строк, {data.shape[1]} столбцов")
+        st.dataframe(data.head())
+    else:
         uploaded = st.file_uploader("Загрузите CSV с данными", type="csv")
         if not uploaded:
             st.info("Пожалуйста, загрузите файл CSV или положите его в data/ai4i2020.csv.")
             return
         data = pd.read_csv(uploaded)
+        st.success(f"Датасет загружен из загруженного файла: {data.shape[0]} строк, {data.shape[1]} столбцов")
+        st.dataframe(data.head())
 
     # Предобработка
     # Убираем недопустимые символы в названиях признаков ([], < и пробелы)
