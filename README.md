@@ -50,7 +50,7 @@ predictive_maintenance_project/
 
 ├── video/
 
-│   └── demo.mp4          # Видео-демонстрация
+│   └── video demo-2.mp4          # Видео-демонстрация
 
 └── README.md             # Этот файл
 
