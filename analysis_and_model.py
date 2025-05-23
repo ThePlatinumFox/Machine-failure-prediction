@@ -66,6 +66,15 @@ def analysis_and_model_page():
     X_train[num_cols] = scaler.fit_transform(X_train[num_cols])
     X_test[num_cols] = scaler.transform(X_test[num_cols])
 
+    # Блок управления обучением — жмём кнопку для запуска и автоматического обновления
+    if 'trained' not in st.session_state:
+        st.session_state['trained'] = False
+    if not st.session_state['trained']:
+        if st.button('Обучить модели'):
+            st.session_state['trained'] = True
+        else:
+            return
+
     # Модели
     models = {
         'Logistic Regression': LogisticRegression(max_iter=1000),
@@ -73,10 +82,13 @@ def analysis_and_model_page():
         'XGBoost': XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42),
         'SVM': SVC(kernel='linear', probability=True, random_state=42)
     }
-
+    
     results = {}
-    for name, model in models.items():
-        model.fit(X_train, y_train)
+    prog = st.progress(0)
+    total = len(models)
+    for i, (name, model) in enumerate(models.items()):
+        with st.spinner(f"Training {name} ({i+1}/{total})..."):
+            model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
         y_proba = model.predict_proba(X_test)[:,1]
         results[name] = {
@@ -86,8 +98,9 @@ def analysis_and_model_page():
             'roc_auc': roc_auc_score(y_test, y_proba),
             'fpr_tpr': roc_curve(y_test, y_proba)
         }
+        prog.progress((i+1)/total)
 
-        # Сохраняем в session_state лучшую модель по roc_auc для динамической презентации
+    # Сохраняем в session_state лучшую модель по roc_auc для динамической презентации
     best_name, best_res = max(results.items(), key=lambda kv: kv[1]['roc_auc'])
     st.session_state['best_model'] = best_name
     st.session_state['best_auc'] = best_res['roc_auc']
@@ -95,6 +108,8 @@ def analysis_and_model_page():
     
     # Отображение
     st.header("Сравнение моделей")
+
+    # Разделение
     for name, res in results.items():
         st.subheader(name)
         st.write(f"Accuracy: {res['accuracy']:.3f}")
